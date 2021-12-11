@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./lib/codemirror/lib/codemirror.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="./lib/codemirror/mode/clike/clike.js"></script>
+    <script src="./src/ast/QNode.js"></script>
+    <script src="./grammar/QGrammar.js"></script>
+    <link rel="stylesheet" href="./lib/codemirror/theme/the-matrix.css">
+    <link rel="stylesheet" href="./lib/codemirror/lib/codemirror.css">
+    <title>Quetzal OLC2</title>
+</head>
+<body>
+    <button id="evaluate">Interpretar</button>
+    <button class="button" onClick="window.open('./tree.html');"><span class="icon">Open</span></button>
+    <input type="text" id="input_string" value="// Su codigo aqui..." />
+    <label id="lin_col">0,0</label>
+    <input type="text" id="console"/>
+    <script>
+        // The editor
+        var myTextarea = $("#input_string")[0];
+        editorConfig = {
+            value: myTextarea.innerHTML,
+            lineNumbers: true,
+            theme: 'the-matrix',
+            mode: 'clike'
+        };
+        var editor = CodeMirror.fromTextArea(myTextarea, editorConfig);
+        editor.focus();
+        const line_column_status = $("#lin_col")[0];
+        const onCursorActivity = (instance) => {
+            const cursor = editor.getCursor();
+            line_column_status.textContent = (cursor.line + 1) + ',' + (cursor.ch + 1);
+        }
+        editor.on("cursorActivity", onCursorActivity);
+        // The console 
+        var myConsole = $("#console")[0];
+        consoleConfig = {
+            lineNumbers: false,
+            mode: 'text/plain',
+            theme: 'the-matrix',
+            readOnly: true
+        };
+        var theConsole = CodeMirror.fromTextArea(myConsole, consoleConfig);
+        function appendTextTo(editor, line, text) {
+            editor.replaceRange(text, CodeMirror.Pos(line));
+        }
+    </script>
+    <script>
+        $(document).ready(function() {
+            $("#evaluate").click(function() {
+                try{
+                    var result = QGrammar.parse(editor.getValue());
+                    console.log(result);
+                    // The graph
+                    console.log(JSON.stringify(result));
+                    sessionStorage.setItem('treeData', JSON.stringify(result));
+                    theConsole.setValue(theConsole.getValue() + result);
+                } catch(e) {
+                    theConsole.setValue(String(e));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
